@@ -1,6 +1,6 @@
-/* Public browser configuration only. NEVER put service_role or VAPID private key here. */
+/* Public browser configuration only. Never add private keys here. */
 window.UMJ_PUSH_CONFIG = {
-  supabaseUrl: "",  // e.g. https://YOUR_PROJECT_REF.supabase.co
-  supabasePublishableKey: "",  // sb_publishable_... (public browser key)
-  vapidPublicKey: "",  // URL-safe VAPID public key, generated on setup
+  "supabaseUrl": "https://iodatutxiwqzrdocxaqx.supabase.co",
+  "supabasePublishableKey": "sb_publishable_GmI-13EFxDX8iO_NYCD4cQ_zns_oDFV",
+  "vapidPublicKey": "BCw618h3BQ457wOHJ5AYOhxFiC6hafNoKsu_36cAmtvgEU4Hn3DZl6Y4Pf2m0AspppuaAY0jbWaL-i5OREMqImU"
 };

@@ -23,10 +23,10 @@ function b64url(bytes){const s=bytes.replace(/-/g,'+').replace(/_/g,'/');const p
 async function client(){if(!clientPromise){clientPromise=import('https://esm.sh/@supabase/supabase-js@2.81.1').then(({createClient})=>createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}}));}return clientPromise}
 async function authenticatedClient(){const c=await client();let {data:{session},error}=await c.auth.getSession();if(error)throw error;if(!session){const result=await c.auth.signInAnonymously();if(result.error)throw result.error;session=result.data.session;}if(!session)throw new Error('تعذّر إنشاء جلسة آمنة.');return c}
 async function register(subscription, action, due){const c=await authenticatedClient();const r=await c.functions.invoke('umj-register-push',{body:{action,subscription:subscription.toJSON(),dueDate:due}});if(r.error)throw r.error;return r.data}
-async function refreshServer(){if(syncing||!configured()||localStorage.getItem(statusKey)!=='1'||Notification.permission!=='granted'||!profile())return;
+async function refreshServer(){if(syncing||!configured()||localStorage.getItem(statusKey)!=='1'||!pushSupported()||Notification.permission!=='granted'||!profile())return;
   const due=dueDate(profile());if(!due)return;
   syncing=true;
-  try {const reg=await navigator.serviceWorker.ready;const sub=await reg.pushManager.getSubscription();if(!sub){localStorage.removeItem(statusKey);return;}if(localStorage.getItem(dueKey)!==due){await register(sub,'subscribe',due);localStorage.setItem(dueKey,due)}}
+  try {const reg=await navigator.serviceWorker.ready;const sub=await reg.pushManager.getSubscription();if(!sub){localStorage.removeItem(statusKey);return;}await register(sub,'subscribe',due);localStorage.setItem(dueKey,due)}
   catch(err){console.warn('Notification resync needed',err)} finally{syncing=false;window.umjRefreshPushUI?.()}
 }
 window.umjSyncPush=()=>{void refreshServer()};
@@ -40,7 +40,8 @@ window.umjEnablePush=async()=>{
   // Permission request is intentionally first async operation after a direct user tap.
   const permission=Notification.permission==='granted'?'granted':await Notification.requestPermission();
   if(permission!=='granted')return notice('لن نرسل أي إشعارات دون موافقتكِ.');
-  const reg=await navigator.serviceWorker.register('./sw.js',{scope:'./'});
+  await navigator.serviceWorker.register('./sw.js',{scope:'./'});
+  const reg=await navigator.serviceWorker.ready;
   const key=b64url(cfg.vapidPublicKey);
   let sub=await reg.pushManager.getSubscription();
   if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key});
