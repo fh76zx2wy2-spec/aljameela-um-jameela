@@ -44,6 +44,14 @@ window.umjEnablePush=async()=>{
   const reg=await navigator.serviceWorker.ready;
   const key=b64url(cfg.vapidPublicKey);
   let sub=await reg.pushManager.getSubscription();
+  const previousKey=sub?.options?.applicationServerKey;
+  if(previousKey){
+    const bytes=new Uint8Array(previousKey);
+    if(bytes.length!==key.length||bytes.some((value,i)=>value!==key[i])){
+      await sub.unsubscribe();
+      sub=null;
+    }
+  }
   if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key});
   const due=dueDate(profile());
   await register(sub,'subscribe',due);
